@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: math-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
+      - key: SYMPY_PYTHON
+        value: /app/.venv/bin/python
+      - key: MATHAI_DB_PATH
+        value: /data/mathai.sqlite
+      - key: ADMIN_EMAIL
+        value: navruzqudratov45@gmail.com
+      - key: MATHAI_GLOBAL_DAILY_LIMIT
+        value: "2000"
+      - key: OPENROUTER_MODEL
+        value: google/gemini-2.5-flash
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: APP_URL
+        sync: false

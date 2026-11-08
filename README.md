@@ -106,10 +106,18 @@ The protected admin panel includes live SQLite and SymPy health checks, AI telem
 
 Run the complete launch test suite with `npm test`. This includes existing symbolic, geometry, authentication, subscription, and payment tests plus `scripts/test-launch.mjs` for input sandboxing, permission constraints, provider signature/authentication checks, latency budgets, and concurrent quota/payment settlement behavior.
 
-## Deploy to Railway (Production)
+## Deploy to Render or Railway (Production)
 
-Because MathAI combines Next.js 16 with a Python 3 + SymPy symbolic verification engine (`solver/math_engine.py`) and a persistent SQLite database (`solver/auth_store.py`), deploy it using the included [`Dockerfile`](./Dockerfile) and [`railway.json`](./railway.json) on a container host with a persistent volume (such as Railway).
+Because MathAI combines Next.js 16 with a Python 3 + SymPy symbolic verification engine (`solver/math_engine.py`) and a SQLite database (`solver/auth_store.py`), deploy it using the included [`Dockerfile`](./Dockerfile), [`render.yaml`](./render.yaml) (for Render.com Free/Paid), or [`railway.json`](./railway.json) (for Railway).
 
+### Option A: Render.com (Free Tier Ready)
+1. Push this repository to GitHub.
+2. On [Render Dashboard](https://dashboard.render.com), click **New + → Blueprint** (or **New + → Web Service**) and select your GitHub repository.
+3. Render automatically reads [`render.yaml`](./render.yaml) (`runtime: docker`, `plan: free`, `healthCheckPath: /api/health`) and prompts only for:
+   - `OPENROUTER_API_KEY`: Your OpenRouter API key
+   - `APP_URL`: Your Render URL (e.g. `https://math-ai.onrender.com`)
+
+### Option B: Railway
 1. Push the repository to GitHub (`.gitignore` excludes `.env.local`, `.vercel/`, and local `data/` SQLite files).
 2. Create a new project on [Railway](https://railway.app) from the GitHub repository. Railway automatically detects `railway.json` and `Dockerfile` and configures `/api/health` as the readiness check.
 3. Attach a **Persistent Volume** to the service mounted at `/data` so `/data/mathai.sqlite` persists across deployments and restarts.
