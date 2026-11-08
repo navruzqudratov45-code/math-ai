@@ -12,7 +12,8 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN python3 -m venv /app/.venv \
   && /app/.venv/bin/pip install --no-cache-dir --upgrade pip \
-  && /app/.venv/bin/pip install --no-cache-dir -r requirements.txt
+  && /app/.venv/bin/pip install --no-cache-dir -r requirements.txt \
+  && /app/.venv/bin/python -m compileall -q /app/.venv || true
 
 FROM base AS builder
 COPY package.json package-lock.json ./
@@ -26,7 +27,6 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=384"
 ENV SYMPY_PYTHON=/app/.venv/bin/python
 ENV MATHAI_DB_PATH=/data/mathai.sqlite
 ENV PORT=3000
@@ -44,6 +44,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/solver ./solver
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 COPY --from=builder --chown=nextjs:nodejs /app/app ./app
+
+RUN /app/.venv/bin/python -m compileall -q /app/solver || true
 
 USER nextjs
 EXPOSE 3000

@@ -9,7 +9,7 @@ import FormulaLibrary from './formula-library';
 
 type Category = 'Matematika' | 'Geometriya';
 type DiagramData = { kind: string; labels?: Record<string, string>; points?: [number, number][] };
-type Computation = { operation?: string; domain?: string; input?: string; result?: string; latex?: string; formula?: string; theory?: string; steps?: string[]; verification?: string; aiVerified?: boolean; diagram?: DiagramData };
+type Computation = { supported?: boolean; operation?: string; domain?: string; input?: string; result?: string; latex?: string; formula?: string; theory?: string; steps?: string[]; verification?: string; aiVerified?: boolean; diagram?: DiagramData };
 const examples = [
   { category: 'Matematika' as Category, label: 'Algebra', text: '2x² − 5x − 3 = 0 tenglamani yeching', symbol: 'x²', tone: 'purple' },
   { category: 'Matematika' as Category, label: 'Funksiyalar', text: 'f(x) = 3x + 2 funksiyaning x = 4 dagi qiymatini toping', symbol: 'ƒ', tone: 'blue' },
@@ -82,6 +82,34 @@ function Solver({ category, setCategory, text, setText }: { category: Category; 
     if (preview) URL.revokeObjectURL(preview);
     setPreview(URL.createObjectURL(file)); setNotice(''); setAnswer(''); setComputation(null);
   }
+  async function compressImageIfNeeded(file: File): Promise<File> {
+    if (file.size <= 450 * 1024) return file;
+    return new Promise(resolve => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const maxSide = 1600;
+        let { width, height } = img;
+        if (width > maxSide || height > maxSide) {
+          if (width >= height) { height = Math.round((height * maxSide) / width); width = maxSide; }
+          else { width = Math.round((width * maxSide) / height); height = maxSide; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          if (!blob || blob.size >= file.size) return resolve(file);
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.86);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
   async function solve() {
     if (!text.trim() && !preview) { setNotice('Masala matnini kiriting yoki rasm yuklang.'); return; }
     setLoading(true); setNotice(''); setAnswer(''); setComputation(null);
@@ -89,11 +117,23 @@ function Solver({ category, setCategory, text, setText }: { category: Category; 
       const body = new FormData();
       body.append('category', category);
       if (text.trim()) body.append('problem', text.trim());
-      if (preview && inputRef.current?.files?.[0]) body.append('image', inputRef.current.files[0]);
+      if (preview && inputRef.current?.files?.[0]) {
+        const readyFile = await compressImageIfNeeded(inputRef.current.files[0]);
+        body.append('image', readyFile);
+      }
       const response = await fetch('/api/solve', { method: 'POST', headers: preview ? undefined : { 'Content-Type': 'application/json' }, body: preview ? body : JSON.stringify({ problem: text.trim(), category }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Masalani yechishda xatolik yuz berdi.');
-      if (typeof result.answer !== 'string' || !result.answer.trim()) throw new Error('AI xizmatidan yaroqli javob kelmadi.');
+      const rawText = await response.text();
+      let result: { answer?: string; error?: string; computation?: Computation } | null = null;
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+          throw new Error(`Server hozir uyg‘onmoqda yoki javob kutish vaqti tugadi (HTTP ${response.status}). Iltimos, 10 soniya kutib qayta "Masalani yechish" tugmasini bosing.`);
+        }
+        throw new Error(`Serverdan kutilmagan javob keldi (HTTP ${response.status}). Sahifani yangilab qayta urinib ko‘ring.`);
+      }
+      if (!response.ok) throw new Error(result?.error || 'Masalani yechishda xatolik yuz berdi.');
+      if (typeof result?.answer !== 'string' || !result.answer.trim()) throw new Error('AI xizmatidan yaroqli javob kelmadi.');
       setAnswer(result.answer);
       setComputation(result.computation?.supported ? result.computation : null);
     } catch (cause) {

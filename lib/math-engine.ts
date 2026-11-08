@@ -32,11 +32,11 @@ export async function computeWithSympy(problem: string): Promise<SympyResult> {
   if (!configuredPython && interpreter === 'py') args.unshift('-3');
 
   return new Promise((resolve, reject) => {
-    const child = spawn(interpreter, args, { cwd: process.cwd(), windowsHide: true, shell: false, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(/*turbopackIgnore: true*/ interpreter, args, { cwd: process.cwd(), windowsHide: true, shell: false, stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     let timedOut = false;
-    const timeout = setTimeout(() => { timedOut = true; child.kill(); }, 8_000);
+    const timeout = setTimeout(() => { timedOut = true; child.kill(); }, 25_000);
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', chunk => { stdout += chunk; if (stdout.length > 256_000) child.kill(); });

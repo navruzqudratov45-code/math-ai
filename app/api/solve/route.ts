@@ -121,8 +121,8 @@ export async function POST(request: NextRequest) {
   if (!problem && !imagePart) return error('Masala matnini kiriting yoki rasm yuklang.', 400);
 
   const signedInUser = await requireRequestUser(request);
-  const key = process.env.OPENROUTER_API_KEY;
-  const model = process.env.OPENROUTER_MODEL;
+  const key = process.env.OPENROUTER_API_KEY?.trim();
+  const model = (process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash').trim();
   const startedAt = Date.now();
   let requestDomain = selectedCategory === 'Geometriya' || /geometry|geometri|uchburchak|aylana|radius|kub|silindr|konus|shar|piramida/i.test(problem) ? 'geometry' : 'math';
   const inputType = imagePart ? (problem ? 'mixed' : 'image') : 'text';
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   };
   if (!key || !model) {
     await logAiRequest(503, 'solver_not_configured');
-    return error('AI solver sozlanmagan. Server muhitida OPENROUTER_API_KEY va OPENROUTER_MODEL qiymatlarini kiriting.', 503);
+    return error('AI solver sozlanmagan. Render dashboard -> Environment bo‘limida OPENROUTER_API_KEY qiymatini kiriting.', 503);
   }
   let quota: {
     allowed: boolean;
@@ -178,7 +178,8 @@ export async function POST(request: NextRequest) {
   if (selectedCategory) content.unshift({ type: 'text', text: `The user selected the ${selectedCategory === 'Geometriya' ? 'geometry' : 'mathematics'} category. ${selectedCategory === 'Geometriya' ? 'Treat this as a geometry request, including when the problem is provided only as an image. Apply relevant geometric theory and explain in simple Uzbek.' : 'Treat this as a mathematics request.'}` });
 
   let computation: SympyResult | null = null;
-  if (problem) {
+  const shouldTrySympy = Boolean(problem) && (!imagePart || /[0-9=+\-*/^()]/.test(problem));
+  if (shouldTrySympy) {
     try {
       const result = await computeWithSympy(problem);
       if (result.supported) computation = result;
