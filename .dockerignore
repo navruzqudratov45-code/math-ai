@@ -1,0 +1,14 @@
+node_modules
+.next
+.venv
+.vercel
+.git
+.gitignore
+data
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.tsbuildinfo
+.env*
+!.env.example
+README.md

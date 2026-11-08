@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.venv/
+.vercel/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+__pycache__/
+*.py[cod]
+out/
+*.tsbuildinfo
+.env*
+!.env.example

@@ -1,0 +1,37 @@
+{
+  "name": "mathai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:math && npm run test:payments && npm run test:launch",
+    "test:math": "node scripts/test-math.mjs",
+    "test:payments": "node --test scripts/test-payments.mjs",
+    "test:launch": "node --test scripts/test-launch.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.5",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "lucide-react": "^0.468.0",
+    "katex": "0.19.1",
+    "react-markdown": "^9.0.3",
+    "remark-math": "^6.0.0",
+    "rehype-katex": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.22",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "katex": "0.19.1"
+  }
+}
