@@ -22,7 +22,7 @@ services:
         value: "2000"
       - key: OPENROUTER_MODEL
         value: google/gemini-2.5-flash
-      - key: OPENROUTER_API_KEY
-        sync: false
       - key: APP_URL
+        value: https://math-ai.onrender.com
+      - key: OPENROUTER_API_KEY
         sync: false
